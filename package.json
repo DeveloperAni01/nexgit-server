@@ -1,0 +1,21 @@
+{
+  "name": "nexgit-server",
+  "version": "1.0.0",
+  "description": "nexgit Backend Server",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file=.env index.js",
+    "dev": "node --env-file=.env --watch index.js"
+  },
+  "keywords": [],
+  "author": "Anirban Mondal",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "cors": "^2.8.6",
+    "dotenv": "^16.0.0",
+    "express": "^4.22.1",
+    "node-fetch": "^3.3.2"
+  }
+}
