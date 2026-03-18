@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import explainRoute from './routes/explain.js';
 import commitRoute from './routes/commit.js';
+import readmeRoute from './routes/readme.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/explain', explainRoute);
 app.use('/commit', commitRoute);
+app.use('/readme', readmeRoute);
 
 // 404 handler
 app.use((req, res) => {
