@@ -7,6 +7,7 @@ import cors from 'cors';
 import explainRoute from './routes/explain.js';
 import commitRoute from './routes/commit.js';
 import readmeRoute from './routes/readme.js';
+import gitignoreRoute from './routes/gitignore.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.get('/', (req, res) => {
 app.use('/explain', explainRoute);
 app.use('/commit', commitRoute);
 app.use('/readme', readmeRoute);
+app.use('/gitignore', gitignoreRoute);
 
 // 404 handler
 app.use((req, res) => {
