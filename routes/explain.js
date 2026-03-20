@@ -1,9 +1,7 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import generateContent from '../utils/ai.js';
 
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 // All nexgit commands for AI context
 const NEXGIT_COMMANDS = `
@@ -83,9 +81,8 @@ Respond ONLY in this exact JSON format — no markdown no extra text:
   "tip": "one helpful tip"
 }`;
 
-        // Call Gemini
-        const result = await model.generateContent(prompt);
-        const rawText = result.response.text();
+        // Call AI (Anthropic → Gemini fallback)
+        const rawText = await generateContent(prompt);
 
         // Parse response
         let parsed;

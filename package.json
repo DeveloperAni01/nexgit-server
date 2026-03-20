@@ -12,6 +12,7 @@
   "author": "Anirban Mondal",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.6",
     "dotenv": "^16.0.0",

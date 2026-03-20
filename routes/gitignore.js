@@ -1,9 +1,8 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import generateContent from '../utils/ai.js';
 
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
 
 router.post('/', async (req, res) => {
     try {
@@ -89,8 +88,7 @@ Respond ONLY in this exact JSON format — no markdown no extra text:
   "detectedStack": "Node.js, .NET, Python"
 }`;
 
-        const result = await model.generateContent(prompt);
-        const rawText = result.response.text();
+        const rawText = await generateContent(prompt);
 
         let parsed;
         try {

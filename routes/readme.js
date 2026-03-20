@@ -1,9 +1,8 @@
 import express from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import generateContent from '../utils/ai.js';
 
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
 
 router.post('/', async (req, res) => {
     try {
@@ -52,8 +51,7 @@ STRICT RULES:
 
 Generate the README now:`;
 
-        const result = await model.generateContent(prompt);
-        const readme = result.response.text();
+        const readme = await generateContent(prompt);
 
         return res.json({ readme });
 
