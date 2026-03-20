@@ -7,7 +7,7 @@ const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 router.post('/', async (req, res) => {
     try {
-        const { projectType, folderContents = [], language = 'english' } = req.body;
+        const { projectType, detectedStacks = [], language = 'english' } = req.body;
 
         if (!projectType) {
             return res.status(400).json({
@@ -24,28 +24,43 @@ router.post('/', async (req, res) => {
 
         const languagePrompt = languagePrompts[language] || languagePrompts.english;
 
-        // Build prompt based on projectType
+        // Build stack context
         let stackContext = '';
 
-        if (projectType === 'other') {
-            // Scan folder contents
-            if (folderContents.length > 0) {
-                stackContext = `
-Scan these files/folders and detect the tech stack:
-${folderContents.join('\n')}
+        if (projectType === 'detected' && detectedStacks.length > 0) {
+            stackContext = `Generate a combined .gitignore for these tech stacks: ${detectedStacks.join(', ')}
+            
+For each stack include ALL specific patterns:
+- Node.js: node_modules/, dist/, npm-debug.log*, .npm
+- .NET: bin/, obj/, *.user, *.suo, .vs/, packages/
+- Angular: dist/, .angular/, .angular/cache/
+- Python: __pycache__/, *.pyc, venv/, .venv/, env/, *.egg-info/
+- Java: target/, .gradle/, build/, *.class
+- Flutter: .dart_tool/, build/, *.g.dart
+- Ruby: vendor/bundle/, .bundle/
+- PHP: vendor/
+- Rust: target/
+- Go: vendor/, *.exe`;
 
-Based on what you detect, generate the appropriate .gitignore patterns.
-If nothing specific is detected, generate a generic .gitignore.`;
-            } else {
-                stackContext = `
-Folder is empty. Generate a generic .gitignore that covers:
-- Common OS files
-- Environment files
-- Log files
-- Common editor files`;
-            }
+        } else if (projectType === 'generic' || detectedStacks.length === 0) {
+            stackContext = `Generate a generic .gitignore that covers common patterns for any project:
+- OS files (.DS_Store, Thumbs.db)
+- Environment files (.env, .env.*)
+- Log files (*.log)
+- Editor files (.vscode/, .idea/)
+- Security files (*.pem, *.key)`;
+
         } else {
-            stackContext = `Generate a .gitignore specifically for: ${projectType}`;
+            // Specific stack selected by user
+            const stackInstructions = {
+                nodejs: 'Node.js — include: node_modules/, dist/, npm-debug.log*, .npm, .env, .env.*',
+                react: 'React — include: node_modules/, dist/, build/, .env, .env.*, npm-debug.log*',
+                dotnet: '.NET — include: bin/, obj/, *.user, *.suo, .vs/, packages/, .env',
+                python: 'Python — include: __pycache__/, *.pyc, venv/, .venv/, env/, *.egg-info/, .env',
+                other: 'Generic project — include common OS, env, log, editor patterns',
+            };
+
+            stackContext = `Generate a .gitignore for: ${stackInstructions[projectType] || projectType}`;
         }
 
         const prompt = `You are NexGit — an AI powered Git assistant.
@@ -53,12 +68,12 @@ Folder is empty. Generate a generic .gitignore that covers:
 ${stackContext}
 
 STRICT RULES:
-1. Return ONLY the patterns — no comments except one header comment
-2. Include all important patterns for the detected/selected stack
-3. Always include these general patterns: .env, .env.*, *.log, .DS_Store, Thumbs.db, *.pem, *.key
-4. If multiple stacks detected — combine all patterns
-5. Remove duplicate patterns
-6. Each pattern on its own line
+1. Return ONLY the exact patterns needed
+2. Always include: .env, .env.*, *.log, .DS_Store, Thumbs.db, *.pem, *.key
+3. If multiple stacks — combine ALL patterns from each stack
+4. No duplicate patterns
+5. Each pattern on its own line
+6. Be SPECIFIC — don't add patterns for stacks not mentioned
 
 ${languagePrompt}
 
@@ -66,12 +81,12 @@ Respond ONLY in this exact JSON format — no markdown no extra text:
 {
   "patterns": [
     "node_modules/",
-    "dist/",
+    "bin/",
+    "__pycache__/",
     ".env",
-    ".env.*",
     "*.log"
   ],
-  "detectedStack": "Node.js"
+  "detectedStack": "Node.js, .NET, Python"
 }`;
 
         const result = await model.generateContent(prompt);
@@ -94,7 +109,9 @@ Respond ONLY in this exact JSON format — no markdown no extra text:
             }
 
             if (!parsed.detectedStack) {
-                parsed.detectedStack = projectType === 'other' ? 'Generic' : projectType;
+                parsed.detectedStack = detectedStacks.length > 0
+                    ? detectedStacks.join(', ')
+                    : projectType;
             }
 
         } catch (e) {
